@@ -112,8 +112,40 @@ const PLATFORM_ICONS = {
     '<svg viewBox="0 0 24 24" fill="#10a37f" aria-hidden="true"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 0012 0a6.065 6.065 0 00-5.256 3.011 6.046 6.046 0 00-6.51 2.9 5.985 5.985 0 00-.516 4.91 6.046 6.046 0 00.516 4.91 6.046 6.046 0 006.51 2.9A6.065 6.065 0 0012 24a6.065 6.065 0 005.256-3.011 6.046 6.046 0 006.51-2.9 5.985 5.985 0 00.516-4.91z"/></svg>'
 };
 
+/** @type {Record<string, string>} */
+const ICON_ALIASES = {
+  gist: 'gh',
+  'pypi-files': 'pypi',
+  'conda-community': 'conda',
+  'ip-githubmodels': 'gh',
+  'ip-huggingface': 'hf',
+  'cr-gitlab': 'gl'
+};
+
 const FALLBACK_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8v8"/></svg>';
+
+/**
+ * Creates a compact, deterministic mark for platforms without a bundled
+ * brand path. The generated SVG stays readable at catalog icon sizes and
+ * avoids network requests for third-party assets.
+ * @param {string} key Platform catalog key.
+ * @returns {string} Inline SVG markup.
+ */
+function createMonogramIcon(key) {
+  const label = LABELS[key] || key.replace(/^(ip|cr)-/, '').replace(/-/g, ' ');
+  const words = label.match(/[a-z\d]+/gi) || ['?'];
+  const initials =
+    words.length === 1
+      ? words[0].slice(0, 2).toUpperCase()
+      : `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+  const hue = Array.from(key).reduce(
+    (hash, character) => (hash * 31 + character.charCodeAt(0)) % 360,
+    0
+  );
+
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="5" fill="hsl(${hue} 58% 38%)"/><text x="12" y="12.5" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="8" font-weight="700">${initials}</text></svg>`;
+}
 
 /**
  * Returns the static SVG mark for a platform key.
@@ -121,7 +153,8 @@ const FALLBACK_ICON =
  * @returns {string} Inline SVG markup.
  */
 export function getPlatformIcon(key) {
-  return PLATFORM_ICONS[key] || FALLBACK_ICON;
+  const alias = ICON_ALIASES[key];
+  return PLATFORM_ICONS[key] || (alias && PLATFORM_ICONS[alias]) || createMonogramIcon(key);
 }
 
 /**
@@ -129,7 +162,10 @@ export function getPlatformIcon(key) {
  * @returns {Record<string, string>} Inline SVG marks.
  */
 export function getPlatformIcons() {
-  return { ...PLATFORM_ICONS, default: FALLBACK_ICON };
+  return {
+    ...Object.fromEntries(Object.keys(PLATFORM_CATALOG).map(key => [key, getPlatformIcon(key)])),
+    default: FALLBACK_ICON
+  };
 }
 
 /** @type {Record<string, string>} */

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   convertSourceUrl,
   getConverterData,
-  getPlatformEntries
+  getPlatformEntries,
+  getPlatformIcons
 } from '../../src/views/platform-data.js';
 
 const ORIGIN = 'https://xget.example';
@@ -17,6 +18,15 @@ function convert(/** @type {string} */ input) {
 }
 
 describe('landing page URL converter', () => {
+  it('provides a dedicated inline SVG icon for every platform', () => {
+    const icons = getPlatformIcons();
+
+    for (const entry of getPlatformEntries()) {
+      expect(icons[entry.key], entry.key).toMatch(/^<svg\b/);
+      expect(icons[entry.key], entry.key).not.toBe(icons.default);
+    }
+  });
+
   it.each([
     [
       'github.com/microsoft/vscode/archive/refs/heads/main.zip?download=1',
