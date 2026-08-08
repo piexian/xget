@@ -47,7 +47,8 @@ jobs:
             TO="${{ github.sha }}"
           fi
 
-          if [[ "$FROM" == "0000000000000000000000000000000000000000" ]]; then
+          if [[ "$FROM" == "0000000000000000000000000000000000000000" ]] || ! git cat-file -e "$FROM^{commit}" 2>/dev/null; then
+            echo "Previous revision is unavailable; validating the current commit only."
             npx commitlint --last --verbose
           else
             npx commitlint --from "$FROM" --to "$TO" --verbose
