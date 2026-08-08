@@ -472,7 +472,11 @@ describe('Worker regression coverage', () => {
       throw new Error('boom');
     });
 
-    const response = await worker.fetch(new Request('https://example.com/'), {}, executionContext);
+    const response = await worker.fetch(
+      new Request('https://example.com/unknown/test'),
+      {},
+      executionContext
+    );
 
     expect(response.status).toBe(500);
     expect(await response.text()).toBe('Internal Server Error');

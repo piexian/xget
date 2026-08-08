@@ -80,8 +80,12 @@ export class PerformanceMonitor {
  */
 export function addPerformanceHeaders(response, monitor) {
   const headers = new Headers(response.headers);
+  const existingContentSecurityPolicy = headers.get('Content-Security-Policy');
   headers.set('X-Performance-Metrics', JSON.stringify(monitor.getMetrics()));
   addSecurityHeaders(headers);
+  if (existingContentSecurityPolicy) {
+    headers.set('Content-Security-Policy', existingContentSecurityPolicy);
+  }
   return new Response(response.body, {
     status: response.status,
     headers

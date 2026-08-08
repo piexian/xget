@@ -10,18 +10,33 @@
 
 import { handleDockerAuth } from '../protocols/docker.js';
 import { finalizeResponse } from '../response/finalize-response.js';
-import {
-  createHomepageRedirect,
-  normalizeEffectivePath,
-  resolveTarget
-} from '../routing/resolve-target.js';
+import { normalizeEffectivePath, resolveTarget } from '../routing/resolve-target.js';
 import { getDefaultCache, tryReadCachedResponse } from '../upstream/cache.js';
 import { resolveCachePolicy } from '../upstream/cache-policy.js';
 import { fetchUpstreamResponse } from '../upstream/fetch-upstream.js';
 import { PerformanceMonitor, addPerformanceHeaders } from '../utils/performance.js';
 import { addCorsHeaders, addSecurityHeaders, createErrorResponse } from '../utils/security.js';
 import { getAllowedMethods, isProtocolRequest, validateRequest } from '../utils/validation.js';
+import { renderDocs } from '../views/docs.js';
+import { renderLanding } from '../views/landing.js';
 import { createRequestContext } from './request-context.js';
+
+/**
+ * Renders a public HTML page with a nonce-bound inline script policy.
+ * @param {(origin: string, nonce: string) => string} renderer
+ * @param {string} origin
+ * @returns {Response} HTML response with the page-specific security policy.
+ */
+function renderPublicPage(renderer, origin) {
+  const nonce = crypto.randomUUID().replace(/-/g, '');
+  const headers = new Headers({ 'Content-Type': 'text/html; charset=utf-8' });
+  addSecurityHeaders(headers);
+  headers.set(
+    'Content-Security-Policy',
+    `default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; img-src 'self'; connect-src 'self'; object-src 'none'`
+  );
+  return new Response(renderer(origin, nonce), { headers });
+}
 
 /**
  * Main request handler with comprehensive caching, retry logic, and security measures.
@@ -69,9 +84,17 @@ export async function handleRequest(request, env, ctx) {
       addSecurityHeaders(headers);
       response = new Response('{}', { status: 200, headers });
     }
-    // Redirect root path or invalid platforms to GitHub repository
+    // Serve the interactive converter at the root path.
     else if (url.pathname === '/' || url.pathname === '') {
-      response = createHomepageRedirect();
+      response = ['GET', 'HEAD'].includes(request.method)
+        ? renderPublicPage(renderLanding, url.origin)
+        : createErrorResponse('Method not allowed', 405);
+    }
+    // Keep the reference page close to the converter, without involving upstream routing.
+    else if (url.pathname === '/docs' || url.pathname === '/docs/') {
+      response = ['GET', 'HEAD'].includes(request.method)
+        ? renderPublicPage(renderDocs, url.origin)
+        : createErrorResponse('Method not allowed', 405);
     } else {
       const validation = validateRequest(request, url, config, requestContext);
       if (!validation.valid) {

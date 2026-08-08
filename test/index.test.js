@@ -3,10 +3,34 @@ import { describe, expect, it } from 'vitest';
 
 describe('Xget Core Functionality', () => {
   describe('Basic Request Handling', () => {
-    it('should redirect root path to homepage', async () => {
-      const response = await SELF.fetch('https://example.com/', { redirect: 'manual' });
-      expect(response.status).toBe(302);
-      expect(response.headers.get('Location')).toBe('https://github.com/xixu-me/Xget');
+    it('should render the URL converter at the root path', async () => {
+      const response = await SELF.fetch('https://example.com/');
+      const body = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toContain('text/html');
+      expect(body).toContain('聚合加速站');
+      expect(body).toContain('id="convert"');
+      expect(response.headers.get('Content-Security-Policy')).toContain("script-src 'nonce-");
+    });
+
+    it('should render documentation without sending it through upstream routing', async () => {
+      const response = await SELF.fetch('https://example.com/docs');
+      const body = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(body).toContain('使用文档');
+      expect(body).toContain('id="filter"');
+    });
+
+    it('should reject mutating requests to public HTML pages', async () => {
+      const [homeResponse, docsResponse] = await Promise.all([
+        SELF.fetch('https://example.com/', { method: 'POST' }),
+        SELF.fetch('https://example.com/docs', { method: 'POST' })
+      ]);
+
+      expect(homeResponse.status).toBe(405);
+      expect(docsResponse.status).toBe(405);
     });
 
     it('should redirect platform prefix without path to homepage', async () => {
@@ -33,7 +57,7 @@ describe('Xget Core Functionality', () => {
     });
 
     it('should include security headers in all responses', async () => {
-      const response = await SELF.fetch('https://example.com/', { redirect: 'manual' });
+      const response = await SELF.fetch('https://example.com/');
 
       expect(response.headers.get('Strict-Transport-Security')).toBeTruthy();
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');
