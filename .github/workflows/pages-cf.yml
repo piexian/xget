@@ -31,6 +31,9 @@ jobs:
         with:
           ref: pages
 
+      - name: Activate Cloudflare Pages configuration
+        run: cp wrangler.pages.toml wrangler.toml
+
       - name: Ensure Cloudflare Pages project exists
         env:
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

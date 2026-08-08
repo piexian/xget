@@ -148,3 +148,6 @@ jobs:
 
       - name: Run type check
         run: npm run type-check
+
+      - name: Validate Cloudflare automatic build
+        run: npx wrangler versions upload --dry-run
