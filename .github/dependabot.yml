@@ -14,14 +14,6 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-    groups:
-      docker-actions:
-        applies-to: version-updates
-        patterns:
-          - "docker/build-push-action"
-          - "docker/login-action"
-          - "docker/metadata-action"
-          - "docker/setup-buildx-action"
     reviewers:
       - "xixu-me"
     assignees:
@@ -59,22 +51,3 @@ updates:
     assignees:
       - "xixu-me"
     versioning-strategy: increase
-
-  # Docker base images
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "docker"
-    reviewers:
-      - "xixu-me"
-    assignees:
-      - "xixu-me"

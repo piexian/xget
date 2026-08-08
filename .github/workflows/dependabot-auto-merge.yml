@@ -3,17 +3,12 @@ name: Dependabot Auto Merge
 on:
   workflow_run:
     workflows:
-      - "Build and Push Image"
       - "CI"
       - "CodeQL"
       - "Commit Lint"
       - "Copilot"
       - "Dependabot Updates"
-      - "Deploy to Cloudflare Pages"
       - "Deploy to Cloudflare Workers"
-      - "Deploy to EdgeOne Pages"
-      - "Deploy to Vercel"
-      - "Sync to Pages and Functions"
     types:
       - completed
   workflow_dispatch:
